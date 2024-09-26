@@ -263,7 +263,7 @@ if st.button("Nettoyer les tableau"):
         nouveaux_tableaux = st.session_state['nouveaux_tableaux']
     else:
         st.error("No tables found. Please generate tables first.")
-        return
+        
 
     tableaux_propres = {}
     for key, value in nouveaux_tableaux.items():
