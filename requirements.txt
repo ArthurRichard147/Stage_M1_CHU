@@ -1,0 +1,7 @@
+os
+docx2txt
+json
+requests
+docx
+re
+
