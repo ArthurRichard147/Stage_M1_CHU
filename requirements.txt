@@ -1,5 +1,5 @@
 docx2txt
 requests
-docx
+python-docx
 
 
