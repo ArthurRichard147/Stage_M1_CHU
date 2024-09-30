@@ -39,7 +39,7 @@ def ask_question(question, file_content=""):
         "model": "mistral-medium-latest",
         "temperature": 0.7,
         "top_p": 1,
-        "max_tokens": 1000,
+        "max_tokens": 1500,
         "messages": [{"role": "user", "content": f"{file_content}\n\n{question}"}]
     }
     reponse = requests.post(api_url, json=data, headers=headers)
@@ -61,7 +61,6 @@ def parse_nested_json(json_str):
     except json.JSONDecodeError:
         return json_str
 
-# Fonction pour nettoyer et reformater la section "Tableau"
 # Fonction pour nettoyer et reformater la section "Tableau"
 def clean_tableau(tableau_str):
     try:
