@@ -1,4 +1,4 @@
-import streamlit as st
+ucimport streamlit as st
 import os
 import docx2txt
 import json
@@ -124,7 +124,7 @@ if st.button("Récupérer les informations dans le Protocole"):
             "question": "Donne moi L'acronyme de l'etude dans ce Protocole ? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'acronyme': 'blabla'} En remplacent les guillemets simples par des guillemets double , Tu n'ajoutera aucun texte avant ou apres le code json",
             "title": "titre"},
         {
-            "question": "Donne moi les tableaux de bilan biologique, hepatique, sanguins, etc.. necessaires à chaque visite ainsi qu'un résumé de ce qu'ils sont est sencé comporter dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Tableau 1','titre du tableaux','Description des valeurs névéssaire dans le tableau': '...'},{'Tableau 2','titre du tableaux','Description'': '...'}, En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json",
+            "question": "Donne moi les tableaux de bilan biologique, hepatique, sanguins, etc.. necessaires à chaque visite ainsi qu'un résumé de ce qu'ils sont est sencé comporter dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Tableau 1','titre du tableaux','Description des valeurs névéssaire dans le tableau': '...'},{'Tableau 2','titre du tableaux','Description'': '...'}, En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte ni aucune note avant ou apres le code json",
             "title": "Tableau"}
     ]
 
