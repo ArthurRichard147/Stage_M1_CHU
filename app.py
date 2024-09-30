@@ -5,8 +5,7 @@ import json
 import requests
 import docx
 import re
-from docx import Document
-from copy import deepcopy
+
 
 # Fonction pour convertir DOCX en texte brut
 def convert_docx_to_txt(input_path, output_path):
@@ -63,12 +62,23 @@ def parse_nested_json(json_str):
         return json_str
 
 # Fonction pour nettoyer et reformater la section "Tableau"
+# Fonction pour nettoyer et reformater la section "Tableau"
 def clean_tableau(tableau_str):
-    # Utiliser une regex pour capturer les groupes Tableau, Titre et Description
-    tableau_list = re.findall(r'\{"Tableau (\d+?)":"(.*?)","Description des valeurs nécessaires dans le tableau":"(.*?)"\}', tableau_str)
-    # Reformater les données en une liste de dictionnaires
-    cleaned_tableau = [{"Tableau": f"Tableau {num}", "Titre": titre, "Description": description} for num, titre, description in tableau_list]
-    return cleaned_tableau
+    try:
+        # Essayer de convertir la chaîne mal formée en JSON
+        tableau_dict = json.loads(tableau_str)
+        # Si la conversion réussit, on retourne une liste de tableaux correctement formattés
+        cleaned_tableau = []
+        for key, value in tableau_dict.items():
+            cleaned_tableau.append({
+                "Tableau": key,
+                "Titre": value.get("titre", "Titre inconnu"),
+                "Description": value.get("Description", "Description indisponible")
+            })
+        return cleaned_tableau
+    except json.JSONDecodeError:
+        # Si la chaîne JSON est mal formée, renvoyer une valeur vide ou un message d'erreur
+        return []
 
 # Interface Streamlit
 st.title("Écriture de CRF à partir de Protocole ")
@@ -124,7 +134,7 @@ if st.button("Récupérer les informations dans le Protocole"):
             "question": "Donne moi L'acronyme de l'etude dans ce Protocole ? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'acronyme': 'blabla'} En remplacent les guillemets simples par des guillemets double , Tu n'ajoutera aucun texte avant ou apres le code json",
             "title": "titre"},
         {
-            "question": "Donne moi les tableaux de bilan biologique, hepatique, sanguins, etc.. necessaires à chaque visite ainsi qu'un résumé de ce qu'ils sont est sencé comporter dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Tableau 1','titre du tableaux','Description des valeurs névéssaire dans le tableau': '...'},{'Tableau 2','titre du tableaux','Description'': '...'}, En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte ni aucune note avant ou apres le code json",
+            "question": "Donne moi les tableaux de bilan biologique, hepatique, sanguins, etc.. necessaires à chaque visite ainsi qu'un résumé de ce qu'ils sont est sencé comporter dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Tableau 1','titre du tableaux','Description des valeurs névéssaire dans le tableau': '...'},{'Tableau 2','titre du tableaux','Description'': '...'}, En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json",
             "title": "Tableau"}
     ]
 
@@ -135,94 +145,46 @@ if st.button("Récupérer les informations dans le Protocole"):
         reponses_json[item["title"]] = reponse
         st.write(f"reponse to '{item['question']}':\n{reponse}\n")
 
-    # Store the responses in session state
-    st.session_state['reponses_json'] = reponses_json
-
-    # Optional: Save the responses as a file (if needed)
-    with open("reponses.json", "w", encoding="utf-8") as output_file:
+    # Sauvegarde des réponses API
+    json_output_path = "reponses.json"
+    with open(json_output_path, "w", encoding="utf-8") as output_file:
         json.dump(reponses_json, output_file, ensure_ascii=False, indent=4)
 
-    # Allow download of the responses
-    st.download_button(
-        label="Download API responses (JSON)",
-        data=json.dumps(reponses_json, ensure_ascii=False, indent=4),
-        file_name="reponses.json",
-        mime="application/json",
-        key="download_api_responses"
-    )
+    # Téléchargement des réponses
+    with open(json_output_path, "rb") as file:
+        st.download_button(
+            label="Download API reponses (JSON)",
+            data=file,
+            file_name="reponses.json",
+            mime="application/json",
+            key="download_api_responses"
+        )
 
 # === Étape 3 : Reformatage des réponses API et téléchargement ===
 if st.button("Nettoyer les reponses"):
-    if 'reponses_json' in st.session_state:
-        reponses_json = st.session_state['reponses_json']
+    # Reformatage des réponses API
+    # Charger le fichier JSON initial
+    with open("reponses.json", "r", encoding="utf-8") as file:
+        json_initial = json.load(file)
+        
 
-        # Reformat the stored responses
-        json_reformate = {
-            "inclusion": parse_criteria(reponses_json.get("inclusion", "{}")),
-            "non_inclusion": parse_criteria(reponses_json.get("non_inclusion", "{}")),
-            "semaine": json.loads(reponses_json.get("semaine", "{}")),
-            "titre": json.loads(reponses_json.get("titre", "{}")),
-            "Tableau": clean_tableau(reponses_json.get("Tableau", "{}"))  # Clean the 'Tableau' section
-        }
+    # Reformater les données JSON
+    json_reformate = {
+        "inclusion": json.loads(json_initial.get("inclusion", "{}")),
+        "non_inclusion": json.loads(json_initial.get("non_inclusion", "{}")),
+        "semaine": json.loads(json_initial.get("semaine", "{}")),
+        "titre": json.loads(json_initial.get("titre", "{}")),
+        "Tableau": clean_tableau(json_initial.get("Tableau", "{}"))  # Nettoyage spécifique pour "Tableau"
+    }
 
-        # Save the cleaned responses (optional)
-        json_clean_output_path = "reponses_clean.json"
-        with open(json_clean_output_path, "w", encoding="utf-8") as f:
-            json.dump(json_reformate, f, ensure_ascii=False, indent=4)
-
-        # Provide download option for cleaned responses
-        st.download_button(
-            label="Download Cleaned Responses (JSON)",
-            data=json.dumps(json_reformate, ensure_ascii=False, indent=4),
-            file_name="reponses_clean.json",
-            mime="application/json",
-            key="download_cleaned_responses"
-        )
-    else:
-        st.error("No responses found in session state. Please generate API responses first.")
+    # Sauvegarde du fichier JSON reformatté
+    json_clean_output_path = "reponses_clean.json"
+    with open(json_clean_output_path, "w", encoding="utf-8") as f:
+        json.dump(json_reformate, f, ensure_ascii=False, indent=4)
 
 
 # === Étape 4 : Traitement des tableaux biologiques ===
 if st.button("Générer les tableau nécessaire"):
-    # Make sure the clean responses are loaded
-    if 'reponses_clean' in st.session_state:
-        json_data = st.session_state['reponses_clean']
-    else:
-        # Load from file only if session state doesn't have it
-        json_clean_output_path = "reponses_clean.json"
-        with open(json_clean_output_path, "r", encoding="utf-8") as file:
-            json_data = json.load(file)
-        st.session_state['reponses_clean'] = json_data
-
-    # Process tables
-    tableaux = json_data.get("Tableau", [])
-    nouveaux_tableaux = {}
-
-    for index, tableau_info in enumerate(tableaux):
-        titre = tableau_info.get("Titre", "Titre inconnu")
-        description = tableau_info.get("Description", "Description indisponible")
-
-        # Ask API for details
-        tableau_question = f"Sur la base du titre du tableau '{titre}' avec la description suivante : '{description}' et tes connaissances médicales, crée un tableau au format .json. Le tableau doit inclure les informations suivantes pour chaque ligne de test: - Le nom de la valeur à relever - l'unité de mesure habituelle pour cette valeur, Comme ceci : {{'Titre du tableau': 'titre','date': 'Date du bilan', 'results': [{{'test': 'Nom de la valeur à tester','value': 'Valeur obtenue','unité': 'unité de mesure normale'}}// Ajoutez d'autres tests ici]}}. En remplaçant les guillemets simples par des guillemets doubles. Tu n'ajoutera aucun texte avant ou apres le code json"
-        reponse = ask_question(tableau_question)
-        nouveaux_tableaux[f"nouveau_tableau_{index + 1}"] = reponse
-
-    # Store the generated tables in session state
-    st.session_state['nouveaux_tableaux'] = nouveaux_tableaux
-
-    # Optional: Still save to file if needed
-    nouveaux_tableaux_path = "nouveaux_tableaux.json"
-    with open(nouveaux_tableaux_path, "w", encoding="utf-8") as output_file:
-        json.dump(nouveaux_tableaux, output_file, ensure_ascii=False, indent=4)
-
-    # Provide download option
-    st.download_button(
-        label="Download Generated Tables (JSON)",
-        data=json.dumps(nouveaux_tableaux, ensure_ascii=False, indent=4),
-        file_name="nouveaux_tableaux.json",
-        mime="application/json"
-    )
-
     json_clean_output_path = "reponses_clean.json"
     # Charger les tableaux biologiques du JSON reformatté
     with open(json_clean_output_path, "r", encoding="utf-8") as file:
@@ -258,67 +220,46 @@ if st.button("Générer les tableau nécessaire"):
 
 # === Étape 5 : Nettoyage des tableaux biologiques ===
 if st.button("Nettoyer les tableau"):
-    # Load the generated tables from session state instead of from file
-    if 'nouveaux_tableaux' in st.session_state:
-        nouveaux_tableaux = st.session_state['nouveaux_tableaux']
-    else:
-        st.error("No tables found. Please generate tables first.")
-        
+    # Charger les nouveaux tableaux
+    nouveaux_tableaux_path = "nouveaux_tableaux.json"
+    with open(nouveaux_tableaux_path, "r", encoding="utf-8") as file:
+        nouveaux_tableaux = json.load(file)
 
     tableaux_propres = {}
     for key, value in nouveaux_tableaux.items():
         tableau_propre = parse_nested_json(value)
         tableaux_propres[key] = tableau_propre
 
-    # Store cleaned tables in session state
-    st.session_state['tableaux_propres'] = tableaux_propres
-
-    # Optional: Save to file if needed
-    tableaux_propres_path = "tableaux_propres.json"
-    with open(tableaux_propres_path, "w", encoding="utf-8") as output_file:
-        json.dump(tableaux_propres, output_file, ensure_ascii=False, indent=4)
-
-    # Provide download option
-    st.download_button(
-        label="Download Cleaned Tables (JSON)",
-        data=json.dumps(tableaux_propres, ensure_ascii=False, indent=4),
-        file_name="tableaux_propres.json",
-        mime="application/json"
-    )
+        # Sauvegarde des tableaux propres
+        tableaux_propres_path = "tableaux_propres.json"
+        with open(tableaux_propres_path, "w", encoding="utf-8") as output_file:
+            json.dump(tableaux_propres, output_file, ensure_ascii=False, indent=4)
 
 
 
 # === Étape 6 : Remplissage du CRF avec les données JSON ===
 if st.button("Générer le CRF"):
+    import json
     from docx import Document
     from copy import deepcopy
 
-    # Function to modify the CRF document with JSON data
+    # Fonction pour modifier le document CRF avec les données JSON
     def modify_crf_document():
-        # Load the existing Word document
+        # Charger le document Word existant
         doc = Document('CRF_0.docx')
 
-        # Load the cleaned responses JSON from session state
-        if 'reponses_clean' in st.session_state:
-            data = st.session_state['reponses_clean']
-        else:
-            st.error("Cleaned responses not found. Please generate and clean the responses.")
-            return None
+        # Charger les données depuis le fichier JSON
+        with open('reponses_clean.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
 
-        # Load the cleaned biological tables JSON from session state
-        if 'tableaux_propres' in st.session_state:
-            data_tableau = st.session_state['tableaux_propres']
-        else:
-            st.error("Cleaned biological tables not found. Please clean the tables first.")
-            return None
-
-        # Modification of inclusion criteria
+        # Modification des critères d'inclusion
         table_inclusion = doc.tables[3]
-        num_criteres_inclusion = len(data['inclusion'])
+        inclusion_criteres = data['inclusion']
+        num_criteres_inclusion = len(inclusion_criteres)
 
-        lignes_intermediaires = len(table_inclusion.rows) - 2  # Exclude first and last row
+        lignes_intermediaires = len(table_inclusion.rows) - 2  # Exclure la première et dernière ligne
 
-        # Adjust rows according to the number of inclusion criteria
+        # Ajustement des lignes selon le nombre de critères d'inclusion
         if num_criteres_inclusion < lignes_intermediaires:
             for _ in range(lignes_intermediaires - num_criteres_inclusion):
                 table_inclusion._element.remove(table_inclusion.rows[-2]._element)
@@ -327,12 +268,14 @@ if st.button("Générer le CRF"):
                 new_row = deepcopy(table_inclusion.rows[1]._element)
                 table_inclusion._element.insert(-2, new_row)
 
-        for i in range(num_criteres_inclusion):
-            table_inclusion.cell(i + 1, 0).text = data['inclusion'][i]['Description']
+        # Itérer à travers les critères d'inclusion en utilisant les clés du dictionnaire
+        for i, (key, value) in enumerate(inclusion_criteres.items()):
+            table_inclusion.cell(i + 1, 0).text = value  # Remplir avec la description du critère
 
-        # Modification of non-inclusion criteria
+        # Modification des critères de non-inclusion
         table_n_inclusion = doc.tables[4]
-        num_criteres_n_inclusion = len(data['non_inclusion'])
+        non_inclusion_criteres = data['non_inclusion']
+        num_criteres_n_inclusion = len(non_inclusion_criteres)
         lignes_intermediaires = len(table_n_inclusion.rows) - 2
 
         if num_criteres_n_inclusion < lignes_intermediaires:
@@ -343,10 +286,11 @@ if st.button("Générer le CRF"):
                 new_row = deepcopy(table_n_inclusion.rows[1]._element)
                 table_n_inclusion._element.insert(-2, new_row)
 
-        for i in range(num_criteres_n_inclusion):
-            table_n_inclusion.cell(i + 1, 0).text = data['non_inclusion'][i]['Description']
+        # Itérer à travers les critères de non-inclusion
+        for i, (key, value) in enumerate(non_inclusion_criteres.items()):
+            table_n_inclusion.cell(i + 1, 0).text = value  # Remplir avec la description du critère
 
-        # Add visits based on the 'semaine' data
+        # Ajout des visites
         nombre_visites = len(data['semaine'])
         table_15 = doc.tables[15]
         table_16 = doc.tables[16]
@@ -365,7 +309,10 @@ if st.button("Générer le CRF"):
             new_paragraph.add_run(f"VISITE {visite_num}").bold = True
             new_paragraph.style = 'TITRE PAGE'
 
-        # Add biological tables
+        # Ajout des tableaux biologiques
+        with open('tableaux_propres.json', 'r', encoding='utf-8') as file:
+            data_tableau = json.load(file)
+
         table_model = doc.tables[-1]
 
         def modify_and_duplicate_table(table_model, table_data_tableau):
@@ -388,20 +335,19 @@ if st.button("Générer le CRF"):
             doc._element.append(new_table)
             modify_and_duplicate_table(doc.tables[-1], table_info)
 
-        # Save the modified document
+        # Sauvegarder le document modifié
         doc.save("CRF_Modif.docx")
         return "CRF_Modif.docx"
 
-    # Modify and generate the modified CRF
+    # Modifier et générer le CRF modifié
     crf_file = modify_crf_document()
 
-    if crf_file:
-        # Allow downloading the modified CRF via Streamlit
-        with open(crf_file, "rb") as file:
-            st.download_button(
-                label="Download Modified CRF",
-                data=file,
-                file_name="CRF_Modif.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="download_modified_crf"
-            )
+    # Télécharger le CRF modifié via Streamlit
+    with open(crf_file, "rb") as file:
+        st.download_button(
+            label="Download Modified CRF",
+            data=file,
+            file_name="CRF_Modif.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            key="download_modified_crf"
+        )
