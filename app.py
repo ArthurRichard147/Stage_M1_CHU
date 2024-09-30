@@ -32,7 +32,7 @@ def remove_repetitions(input_file, output_file):
 def ask_question(question, file_content=""):
     api_url = "https://api.mistral.ai/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer s3fUdoVTsBsNoFrRTlni3LbV7giRwJJ5",
+        "Authorization": f"Bearer wD0wgblQCZvPMzHoLj8cu6ZQOdQkibrR",
         "Content-Type": "application/json"
     }
     data = {
@@ -122,19 +122,19 @@ if st.button("Récupérer les informations dans le Protocole"):
 
     questions_and_titles = [
         {
-            "question": "Donne moi les criteres d'inclusion dans ce Protocole. Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Critere 1': 'critere','Critere 2': 'critere','Critere 3': 'critere',...} En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json ",
+            "question": "Donne moi les criteres d'inclusion dans ce Protocole. Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Critere 1': 'critere','Critere 2': 'critere','Critere 3': 'critere',...} En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json, Do not add any other text outside the json code ",
             "title": "inclusion"},
         {
-            "question": "Donne moi les criteres de non-inclusion dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Critere 1': 'critere','Critere 2': 'critere','Critere 3': 'critere',...} En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json ",
+            "question": "Donne moi les criteres de non-inclusion dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Critere 1': 'critere','Critere 2': 'critere','Critere 3': 'critere',...} En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json, Do not add any other text outside the json code  ",
             "title": "non_inclusion"},
         {
-            "question": "Quelles sont les semaine des visite de suivis? Donne moi la reponse sous format json sans retour a la ligne comme ceci  {'Visite 1': 'Visite','Visite 2': 'Visite','Visite 3': 'Visite',...} En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json",
+            "question": "Quelles sont les semaine des visite de suivis? Donne moi la reponse sous format json sans retour a la ligne comme ceci  {'Visite 1': 'Visite','Visite 2': 'Visite','Visite 3': 'Visite',...} En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json, Do not add any other text outside the json code ",
             "title": "semaine"},
         {
-            "question": "Donne moi L'acronyme de l'etude dans ce Protocole ? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'acronyme': 'blabla'} En remplacent les guillemets simples par des guillemets double , Tu n'ajoutera aucun texte avant ou apres le code json",
+            "question": "Donne moi L'acronyme de l'etude dans ce Protocole ? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'acronyme': 'blabla'} En remplacent les guillemets simples par des guillemets double , Tu n'ajoutera aucun texte avant ou apres le code json, Do not add any other text outside the json code ",
             "title": "titre"},
         {
-            "question": "Donne moi les tableaux de bilan biologique, hepatique, sanguins, etc.. necessaires à chaque visite ainsi qu'un résumé de ce qu'ils sont est sencé comporter dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Tableau 1','titre du tableaux','Description des valeurs névéssaire dans le tableau': '...'},{'Tableau 2','titre du tableaux','Description'': '...'}, En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json",
+            "question": "Donne moi les tableaux de bilan biologique, hepatique, sanguins, etc.. necessaires à chaque visite ainsi qu'un résumé de ce qu'ils sont est sencé comporter dans ce Protocole? Donne moi la reponse sous format json sans retour a la ligne comme ceci {'Tableau 1','titre du tableaux','Description des valeurs névéssaire dans le tableau': '...'},{'Tableau 2','titre du tableaux','Description'': '...'}, En remplacent les guillemets simples par des guillemets double, Tu n'ajoutera aucun texte avant ou apres le code json, Do not add any other text outside the json code ",
             "title": "Tableau"}
     ]
 
@@ -198,7 +198,7 @@ if st.button("Générer les tableau nécessaire"):
         description = tableau_info.get("Description", "Description indisponible")
 
         # Interroger l'API pour obtenir les détails des tableaux biologiques
-        tableau_question = f"Sur la base du titre du tableau '{titre}' avec la description suivante : '{description}' et tes connaissances médicales, crée un tableau au format .json. Le tableau doit inclure les informations suivantes pour chaque ligne de test: - Le nom de la valeur à relever - l'unité de mesure habituelle pour cette valeur, Comme ceci : {{'Titre du tableau': 'titre','date': 'Date du bilan', 'results': [{{'test': 'Nom de la valeur à tester','value': 'Valeur obtenue','unité': 'unité de mesure normale'}}// Ajoutez d'autres tests ici]}}. En remplaçant les guillemets simples par des guillemets doubles. Tu n'ajoutera aucun texte avant ou apres le code json"
+        tableau_question = f"Sur la base du titre du tableau '{titre}' avec la description suivante : '{description}' et tes connaissances médicales, crée un tableau au format .json. Le tableau doit inclure les informations suivantes pour chaque ligne de test: - Le nom de la valeur à relever - l'unité de mesure habituelle pour cette valeur, Comme ceci : {{'Titre du tableau': 'titre','date': 'Date du bilan', 'results': [{{'test': 'Nom de la valeur à tester','value': 'Valeur obtenue','unité': 'unité de mesure normale'}}// Ajoutez d'autres tests ici]}}. En remplaçant les guillemets simples par des guillemets doubles. Tu n'ajoutera aucun texte avant ou apres le code json, Do not add any other text outside the json code "
 
         reponse = ask_question(tableau_question)
         nouveaux_tableaux[f"nouveau_tableau_{index + 1}"] = reponse
