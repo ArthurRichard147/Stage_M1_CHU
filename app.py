@@ -252,6 +252,27 @@ if st.button("Générer le CRF"):
         with open('reponses_clean.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
 
+        # Modification du titre
+        table_titre = doc.tables[0]
+        acronyme = data['titre']['acronyme']
+        
+        cell = table_titre.cell(1, 0)
+        cell.text = ""
+        
+        paragraph = cell.add_paragraph()
+        run = paragraph.add_run(f"TITRE : {acronyme}\n")
+        run.font.size = docx.shared.Pt(20)  
+        
+        run = paragraph.add_run("N°ID-RCB / EudraCT : (Ecrire ici le numéro ID-RCB de l’étude)\n")
+        run.font.size = docx.shared.Pt(16)  
+        run = paragraph.add_run("N°CHU : (Ecrire ici le numéro CHU de l’étude)\n")
+        run.font.size = docx.shared.Pt(16) 
+        run = paragraph.add_run("Type de réglementation : (Ecrire ici le type de réglementation de l’étude)")
+        run.font.size = docx.shared.Pt(16)
+        
+        # Aligner le texte au centre
+        paragraph.alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.CENTER
+        
         # Modification des critères d'inclusion
         table_inclusion = doc.tables[3]
         inclusion_criteres = data['inclusion']
