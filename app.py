@@ -336,18 +336,26 @@ if st.button("Générer le CRF"):
         table_model = doc.tables[-1]
 
         def modify_and_duplicate_table(table_model, table_data_tableau):
+            # Print the table data to check its structure
+            st.write(table_data_tableau)  # or use print(table_data_tableau) if running locally
+            
+            if 'results' not in table_data_tableau:
+                st.error(f"Missing 'results' key in the table data: {table_data_tableau}")
+                return
+        
             for i, result in enumerate(table_data_tableau['results']):
                 if len(table_model.rows) <= i + 4:
                     new_row = deepcopy(table_model.rows[3]._element)
                     table_model._element.append(new_row)
+        
+                table_model.cell(0, 0).text = f"Bilan {table_data_tableau['Titre du tableau']}"
+                table_model.cell(1, 0).text = f"Bilan {table_data_tableau['Titre du tableau']}"
+                table_model.cell(2, 1).text = f"Date du Bilan {table_data_tableau['Titre du tableau']}"
+        
+                for i, result in enumerate(table_data_tableau['results']):
+                    table_model.cell(i + 3, 1).text = result['test']
+                    table_model.cell(i + 3, 2).text = "|__|__|, |__|__|", result['unité']
 
-            table_model.cell(0, 0).text = f"Bilan {table_data_tableau['Titre du tableau']}"
-            table_model.cell(1, 0).text = f"Bilan {table_data_tableau['Titre du tableau']}"
-            table_model.cell(2, 1).text = f"Date du Bilan {table_data_tableau['Titre du tableau']}"
-
-            for i, result in enumerate(table_data_tableau['results']):
-                table_model.cell(i + 3, 1).text = result['test']
-                table_model.cell(i + 3, 2).text = "|__|__|, |__|__|", result['unité']
 
         for key, table_info in data_tableau.items():
             doc.add_paragraph()
